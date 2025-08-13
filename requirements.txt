@@ -1,0 +1,9 @@
+requests          # For API calls (Google Safe Browsing, VirusTotal)
+tldextract        # To parse domain, subdomains, etc. from URLs
+validators        # Optional, for URL validation
+python-dotenv     # To load .env file with API keys securely
+streamlit         # If you build the web UI
+colorama          # For colored CLI output (optional, but nice)
+pandas            # If processing batch URLs or datasets
+scikit-learn      # Only if you implement the ML model part
+joblib            # To save/load ML models
