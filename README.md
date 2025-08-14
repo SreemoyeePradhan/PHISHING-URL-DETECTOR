@@ -1,4 +1,4 @@
-# 🔍 Phishing URL Detector
+# 🔍 Phishing URL Detector 🔍
 
 The Phishing URL Detector is a Streamlit-based web application designed to help users check whether a given URL is safe or potentially malicious. It leverages three layers of protection — rule-based analysis, Google Safe Browsing API, and VirusTotal API — to provide a comprehensive risk assessment. The system is built for security researchers, developers, and everyday users who want a quick and interactive way to verify suspicious links before clicking on them.
 The application’s rule-based engine inspects URLs for phishing indicators such as the use of HTTP instead of HTTPS, excessive subdomains, URL shorteners, punycode, suspicious keywords, IP-based domains, and unusual formatting. This logic provides an immediate offline analysis even without API keys.
