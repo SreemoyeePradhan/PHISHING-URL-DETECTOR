@@ -1,55 +1,62 @@
-# main.py
-import argparse
-from url_checker import analyze_url
-from api_checker import google_safebrowsing_check, virustotal_check
-from colorama import init, Fore
+import streamlit as st
+from dotenv import load_dotenv
+import os
+from url_checker import check_google_safebrowsing, check_virustotal, check_rule_based
 
-init(autoreset=True)
+# Load environment variables
+load_dotenv()
 
-def main():
-    parser = argparse.ArgumentParser(description="Phishing URL Detector CLI")
-    parser.add_argument("url", help="URL to analyze")
-    args = parser.parse_args()
+st.set_page_config(page_title="URL Safety Checker", layout="wide")
 
-    url = args.url.strip()
+st.title("🔍 URL Safety Checker")
 
-    # --- Run checks ---
-    rule_res = analyze_url(url)
-    gsb_res = google_safebrowsing_check(url)
-    vt_res = virustotal_check(url)
+# Input URL
+url = st.text_input("Enter the URL to check:")
 
-    # --- Collect all reasons ---
-    combined_reasons = list(rule_res.get("reasons", []))
-
-    if gsb_res.get("malicious"):
-        combined_reasons.append("Flagged by Google Safe Browsing")
-    elif "error" in gsb_res:
-        combined_reasons.append(f"Google Safe Browsing error: {gsb_res['error']}")
-
-    if vt_res.get("malicious"):
-        combined_reasons.append(
-            f"Flagged by VirusTotal - Malicious detections: {vt_res.get('malicious_count', 0)}"
+if st.button("Check URL"):
+    if url:
+        st.write("### Checking URL...")
+        
+        # Google Safe Browsing
+        gs_result = check_google_safebrowsing(url)
+        st.subheader("Google Safe Browsing Result")
+        st.write(gs_result)
+        
+        # VirusTotal
+        vt_result = check_virustotal(url)
+        st.subheader("VirusTotal Result")
+        st.write(vt_result)
+        
+        # Rule-based analysis
+        rule_score, rule_findings = check_rule_based(url)
+        st.subheader("Rule-based Analysis")
+        for finding in rule_findings:
+            st.markdown(f"- {finding}")
+        
+        # Determine Final Verdict
+        final_verdict = ""
+        verdict_color = "green"
+        
+        # STRICTER VERDICT LOGIC
+        # Check if VirusTotal or Google Safe Browsing reported threats
+        vt_threat = any(v in vt_result.lower() for v in ["malware", "phishing", "suspicious", "unsafe"])
+        gs_threat = any(v in gs_result.lower() for v in ["malware", "phishing", "suspicious", "unsafe"])
+        
+        if vt_threat or gs_threat or rule_score >= 5:
+            final_verdict = "❌ Unsafe URL"
+            verdict_color = "red"
+        elif rule_score > 0:  # Even 1 small risk triggers yellow
+            final_verdict = "⚠ Potential Risk"
+            verdict_color = "orange"
+        else:
+            final_verdict = "✅ Safe URL"
+            verdict_color = "green"
+        
+        # Display final verdict with color
+        st.markdown(
+            f"<h3 style='color:{verdict_color}'>{final_verdict}</h3>",
+            unsafe_allow_html=True
         )
-    elif "error" in vt_res:
-        combined_reasons.append(f"VirusTotal error: {vt_res['error']}")
 
-    # --- Determine final verdict ---
-    suspicious = (
-        rule_res.get("suspicious", False)
-        or gsb_res.get("malicious", False)
-        or vt_res.get("malicious", False)
-    )
-
-    # --- Output ---
-    print(Fore.CYAN + "Final URL Analysis")
-    print(f"URL: {url}")
-    print(f"Score (Rule-based): {rule_res['score']}")
-    print(f"Verdict: {Fore.RED + 'SUSPICIOUS' if suspicious else Fore.GREEN + 'SAFE'}")
-
-    if combined_reasons:
-        print("Reasons:")
-        for r in combined_reasons:
-            print(f"- {r}")
-
-if __name__ == "__main__":
-    main()
+    else:
+        st.warning("Please enter a URL to check.")
