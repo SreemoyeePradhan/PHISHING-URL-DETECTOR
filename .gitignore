@@ -4,4 +4,6 @@ __pycache__/
 # Python virtual environment
 venv/
 
+# dotenv
+.env 
 
